@@ -1,2 +1,2 @@
 # HEARD
- Hackathon Evaluation Analysis of Recombionation Deficiency
+Hackathon Evaluation Analysis of Recombination Deficiency
