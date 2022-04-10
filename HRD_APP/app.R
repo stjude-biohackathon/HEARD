@@ -75,7 +75,17 @@ hrd_shiny<-function(patient_data) {
         # Show a plot of the generated distribution
         mainPanel(
             tabsetPanel(type="tabs",
-                        tabPanel("Main",
+                        tabPanel("Patient_Data",
+                                 fluidRow(
+                                     column(
+                                         width=12,
+                                         #div(h3("Patient_Data"), align="center"),
+                                         #div(DT::dataTableOutput("dt_PatientData"), style="font-size: 100%; width: 100%")
+                                         
+                                     )
+                                 )
+                        ),
+                        tabPanel("Cohort_View",
             #We can change the actual loader to be a gif or image
                             fluidRow(
                                 column(
@@ -143,7 +153,7 @@ hrd_shiny<-function(patient_data) {
                 df$highlight<-"no"
                 
                 if(isTruthy(input$TCGA)){
-                    df$highlight[df$TCGA==input$TCGA]<-"yes"
+                    df$highlight[df$FileName==input$TCGA]<-"yes"
                 }
                 
                 # bargraph 
