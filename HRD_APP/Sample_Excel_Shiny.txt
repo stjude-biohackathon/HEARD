@@ -1,0 +1,11 @@
+Patient	Score
+Patient_1	3
+Patient_2	5
+Patient_3	7
+Patient_4	4
+Patient_5	5
+Patient_6	3
+Patient_7	6
+Patient_8	7
+Patient_9	4
+Patient_10	5
