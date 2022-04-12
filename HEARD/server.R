@@ -106,7 +106,6 @@ function(input, output, session) {
       #y=input$hrd_metrics, fill="highlight")) +
       geom_bar(stat="identity",aes_string(y=input$hrd_metrics))+
       #coord_flip() +
-      ggtitle(metric) +
       xlab("Patient") +
       ylab("Value") +
       #theme_bw(base_size = 16) +
@@ -114,7 +113,8 @@ function(input, output, session) {
         axis.text.x = element_text(angle = 90,vjust=1, face = "bold",size=12),
         axis.text.y = element_text(face = "bold",size=12),
         axis.title = element_text(face = "bold",size=14),
-        legend.title = element_text(face = "bold",size=14),
+        legend.title = element_blank(),
+        legend.position = "none",
         legend.text = element_text(face="bold",size=12),
         #axis.text.x = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"), # bg of the panel
