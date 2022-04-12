@@ -82,29 +82,31 @@ navbarPage(
                                 # First panel is the patient data - NEED TO RENDER
                               
                                   column(
-                                    width=6,offset=0,
+                                    width=3,offset=0,
+                                    h3("Patient Information"),
                                     #withLoader(textOutput("clinical_info")),
                                     htmlOutput("clinical_info")           
                                   ), # column end
-                                ),
-                                fluidRow(
-                                  # First Row is the HRD scores
-                                  column(width=3,offset=2,
+                          
+                                
+                                  # FMove to a single row
+                                  column(width=3,#offset=2,
                                          h3("HRD Score Metrics"),
                                          pickerInput("hrd_metrics", "HRD Metric:", 
                                                      choices=colnames(hrd_data[,-1])),
                                          withLoader(plotOutput("hrdScores", height="400px", width="400px"),
                                                     type="html", loader="pacman")
                                   ), #end hrdScores column
-                                  column(width=3,offset=4,
+                                  column(width=3,#offset=4,
                                          h3("Mutational Signature Exposure"),
                                          withLoader(plotOutput("mutsigs", height="400px", width="400px"),
                                                     type="html", loader="pacman")
-                                  ),
+                                  
                                 ),
+           ),
                                 # next Row is the chromosome info
                                 fluidRow(
-                                  column(width=2,offset=6,
+                                  column(width=2,offset=7,
                                          pickerInput("Chromosome", "Chromosome:",
                                                      choices = c('chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13',
                                                                  'chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX'))),
@@ -169,3 +171,4 @@ navbarPage(
   
   
 )
+
