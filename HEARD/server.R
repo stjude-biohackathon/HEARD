@@ -23,11 +23,11 @@ gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
 
 
 #EVAN
-clinical_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
+clinical_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
 hrd_data <- read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
 id_data<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
 sbs_data <- read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-mut_call_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
+mut_call_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
 
 
 #EVAN
@@ -77,7 +77,7 @@ function(input, output, session) {
   
   
   # output chomosome images
-  output$chromImage <- renderImage({
+  output$chromImage <- renderImage(deleteFile = FALSE,{
     filename <- normalizePath(file.path(paste('TCGA_HRD_positive_samples_CNA_figs/',
                                               input$pat_id,'omosome_view/',
                                               input$pat_id,'omosome_view',
@@ -333,7 +333,7 @@ function(input, output, session) {
                                            y=input$Column, fill="highlight")) + 
           geom_bar(stat="identity") +
           theme(axis.text.x = element_text(angle = 90))+
-          scale_fill_manual(values=c("yes"="tomato", "no"="gray"), guide=FALSE)
+          scale_fill_manual(values=c("yes"="tomato", "no"="gray"), guide="none")
         x
         
       })
