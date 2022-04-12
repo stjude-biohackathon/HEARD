@@ -88,12 +88,12 @@ shinyApp(
                                     h3("HRD Score Metrics"),
                                     pickerInput("hrd_metrics", "HRD Metric:", 
                                                 choices=colnames(hrd_data[,-1])),
-                                    withLoader(plotOutput("hrdScores", height="300px", width="300px"),
+                                    withLoader(plotOutput("hrdScores", height="400px", width="400px"),
                                                type="html", loader="pacman")
                                 ), #end hrdScores column
                              column(width=3,offset=3,
                                     h3("Mutational Signature Exposure"),
-                                    withLoader(plotOutput("mutsigs", height="300px", width="300px"),
+                                    withLoader(plotOutput("mutsigs", height="400px", width="400px"),
                                                type="html", loader="pacman")
                                 ),
                              ),
@@ -171,7 +171,11 @@ shinyApp(
         ylab("Value") +
         #theme_bw(base_size = 16) +
         theme(
-          axis.text.x = element_text(angle = 90,vjust=1, face = "bold"),
+          axis.text.x = element_text(angle = 90,vjust=1, face = "bold",size=12),
+          axis.text.y = element_text(face = "bold",size=12),
+          axis.title = element_text(face = "bold",size=14),
+          legend.title = element_text(face = "bold",size=14),
+          legend.text = element_text(face="bold",size=12),
           #axis.text.x = element_text(face = "bold"),
           panel.background = element_rect(fill = "transparent"), # bg of the panel
           plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
@@ -199,12 +203,15 @@ shinyApp(
       mat <- mat[row.names(mat) == getShortName(input$pat_id),]
       #Heatmap
       Heatmap(as.matrix(mat), name="Exposure", 
-              width = ncol(mat)*unit(2, "cm"), 
-              height = nrow(mat)*unit(5, "cm"),
+              width = ncol(mat)*unit(3, "cm"), 
+              height = nrow(mat)*unit(4, "cm"),
               cluster_rows=FALSE, 
               cluster_columns=FALSE,
-              column_names_gp = grid::gpar(fontsize = 6, col=col.colors),
-              row_names_gp = grid::gpar(fontsize = 8, col=row.colors), col=col,
+              column_names_gp = grid::gpar(fontsize = 12, col=col.colors),
+              column_title_gp = grid::gpar(fontsize = 16, col=col.colors),
+              row_names_gp = grid::gpar(fontsize = 12, col=row.colors), col=col,
+              row_title_gp = grid::gpar(fontsize = 16, col=col.colors),
+              show_heatmap_legend = FALSE,
               cell_fun = function(j, i, x, y, width, height, fill) {
                 grid.text(sprintf("%.1f", mat[i, j]), x, y, gp = gpar(fontsize = 10,col="red"))})
       
