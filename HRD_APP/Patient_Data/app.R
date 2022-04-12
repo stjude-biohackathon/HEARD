@@ -127,12 +127,14 @@ shinyApp(
       df <- clinical_data[clinical_data$Patient == substr(input$pat_id, 1, 12),]
       df_germline <- df[df$Sample_type == "Normal",]
       df_somatic <- df[df$Sample_type == "Tumor",]
+      # creating our text lines
+      text0 <- paste("",sep="<br/>")
       text1 <- paste("Patient Name:",df_germline$Patient)
       text2 <- paste("Patient Diagnosis:",df_germline$Dx)
       text3 <- paste("Patient Age: 56")
       text4 <- paste("Patient Germline SNP:",df_germline$dbSNP)
       text5 <- paste("Patient Somatic SNP:",df_somatic$dbSNP)
-      HTML(paste(text1,text2,text3,text4,text5,sep="<br/>"))
+      HTML(paste(text0,text1,text2,text3,text4,text5,sep="<br/>"))
     })
     # output chomosome images
     output$chromImage <- renderImage({
@@ -154,20 +156,20 @@ shinyApp(
       df_plot <- rbind(df[df$FileName == input$pat_id,],
                        avg)
       # set up highlight
-      df_plot$highlight<-"no"
-      df_plot$highlight <- ifelse(df_plot$FileName == input$pat_id,"yes","no")
+      df_plot$Sample<-"no"
+      df_plot$Sample <- ifelse(df_plot$FileName == input$pat_id,"yes","no")
       df_plot$FileName <- substr(df_plot$FileName, 1, 12)
       metric <- input$hrd_metrics
       #print(df_plot$FileName)
       #ggplot(hrd_data, aes(x=FileName,y=input$hrd_metrics)) +
-      ggplot(df_plot, aes(x=FileName,fill=highlight)) +
+      ggplot(df_plot, aes(x=FileName,fill=Sample)) +
         #y=input$hrd_metrics, fill="highlight")) +
         geom_bar(stat="identity",aes_string(y=input$hrd_metrics))+
         #coord_flip() +
         ggtitle(metric) +
         xlab("Patient") +
         ylab("Value") +
-        theme_bw(base_size = 16) +
+        #theme_bw(base_size = 16) +
         theme(
           axis.text.x = element_text(angle = 90,vjust=1, face = "bold"),
           #axis.text.x = element_text(face = "bold"),

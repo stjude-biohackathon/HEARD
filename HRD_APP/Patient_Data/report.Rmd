@@ -21,6 +21,8 @@ paste("The patient's HRD sum score is:",params$HRDsum)
 ## Patient HRDsum Metrics
 ```{r,echo=FALSE}
 paste("The patient's HRDsum score is: ", params$HRDsum, ". The sample collected for this patient has an estimated tumor cellularity score of: ", params$cellularity, "The estimated tumor cellularity is defined as the relative proportion of tumor and normal cells in a sample.")
+p <- ggplot(params,aes(x=params$FileName,y=params$HRDsum)) +
+  geom_bar(stat="Identity")
 ```
 
 ## Patient HRD Status evidence
