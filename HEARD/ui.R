@@ -12,7 +12,7 @@ library("shinyWidgets")
 library("ggplot2")
 library("RColorBrewer")
 library("ComplexHeatmap")
-
+options(shiny.maxRequestSize=300*1024^2)
 options(repos = BiocManager::repositories())
 
 tcga_data<-read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
@@ -21,14 +21,103 @@ id_score<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=
 gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
 
 
+
+#EVAN
+
+clinical_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
+hrd_data <- read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
+id_data<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
+sbs_data <- read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
+mut_call_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
+
+
+#EVAN
+# A couple of convenience utilities
+chr_translation=list("-01","-02","-03","-04","-05",
+                     "-06","-07","-08","-09","-10",
+                     "-11","-12","-13","-14","-15",
+                     "-16","-17","-18","-19","-20",
+                     "-21","-22","-23")
+
+names(chr_translation)=c("chr1","chr2","chr3","chr4","chr5",
+                         "chr6","chr7","chr8","chr9","chr10",
+                         "chr11","chr12","chr13","chr14","chr15",
+                         "chr16","chr17","chr18","chr19","chr20",
+                         "chr21","chr22","chrX")
+
+
+#utility functions
+getShortName<-function(sample_basename) { 
+  tokens=str_split(sample_basename,"\\.",n=Inf)
+  parta=unlist(tokens)[1]
+  tokensb=str_split(parta,"-")
+  tokensb=unlist(tokensb)
+  shortname=paste(tokensb[1],tokensb[2],tokensb[3],sep="-")
+  return(shortname)
+}
+
+
+
+
 navbarPage(
   theme = bs_theme(version = 5),
   "HEARD",
   img(
     src = "images/HEARD.png",
-    width = "200px"
+    width = "150px"
   ),
-  tabPanel("Patient_View"),
+  tabPanel("Patient_View",
+           sidebarPanel(width=2,
+                        # naming this panel the Case Navigator
+                        h3("Case Navigator"),
+                        # get patient ID info for rendering
+                        pickerInput("pat_id", "Patient:", 
+                                    choices=(sbs_data$FileName)),
+                        # Radio button for report
+                        radioButtons("hrd_stat","HRD Positive",choices=c("Yes","No")),
+                        # button for downloading the report
+                        h3("Click to Generate Report"),
+                        downloadButton("report", "Generate report"),
+           ),
+                                # First panel is the patient data - NEED TO RENDER
+                                fluidRow(
+                                  column(
+                                    width=12,offset=0,
+                                    #withLoader(textOutput("clinical_info")),
+                                    htmlOutput("clinical_info")           
+                                  ), # column end
+                                ),
+                                fluidRow(
+                                  # First Row is the HRD scores
+                                  column(width=3,
+                                         h3("HRD Score Metrics"),
+                                         pickerInput("hrd_metrics", "HRD Metric:", 
+                                                     choices=colnames(hrd_data[,-1])),
+                                         withLoader(plotOutput("hrdScores", height="400px", width="400px"),
+                                                    type="html", loader="pacman")
+                                  ), #end hrdScores column
+                                  column(width=3,offset=3,
+                                         h3("Mutational Signature Exposure"),
+                                         withLoader(plotOutput("mutsigs", height="400px", width="400px"),
+                                                    type="html", loader="pacman")
+                                  ),
+                                ),
+                                # next Row is the chromosome info
+                                fluidRow(
+                                  column(width=2,offset=6,
+                                         pickerInput("Chromosome", "Chromosome:",
+                                                     choices = c('chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13',
+                                                                 'chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX'))),
+                                ),
+                                fluidRow(
+                                  column(width=12, offset=0,
+                                         withLoader(plotOutput("chromImage", height="300px", width="300px"),
+                                                    type="html", loader="pacman")
+                                  ), #end chromImage column
+                                ),
+                                #), #end fluidRow2
+                                #),#end fluidrow1
+                       ),
   tabPanel("Cohort_View",
            sidebarPanel(pickerInput("TCGA", "TCGA:", 
                                     choices = (tcga_data[,1])),
@@ -63,8 +152,7 @@ navbarPage(
   tabPanel(
     "Upload Data Table",
     fluidPage(
-      wellPanel(p("Upload your data file below and click Analyze Data to begin visualization."),
-                "Allowed filetypes are .txt, .csv, .tsv, and .xlsx"),
+      wellPanel(p("Upload your data file below and click Analyze Data to begin visualization.")),
       fluidRow(
         column(fileInput("uploaded_HRD_data",
                          label = "Upload your data",
@@ -81,3 +169,4 @@ navbarPage(
   
   
 )
+
