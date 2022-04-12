@@ -12,7 +12,14 @@ library("shinyWidgets")
 library("ggplot2")
 library("RColorBrewer")
 library("ComplexHeatmap")
+
 options(repos = BiocManager::repositories())
+
+tcga_data<-read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
+sbs_score<-read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
+id_score<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
+gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
+
 
 navbarPage(
   theme = bs_theme(version = 5),
