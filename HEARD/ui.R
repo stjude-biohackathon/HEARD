@@ -26,7 +26,7 @@ navbarPage(
   "HEARD",
   img(
     src = "images/HEARD.png",
-    width = "150px"
+    width = "200px"
   ),
   tabPanel("Patient_View"),
   tabPanel("Cohort_View",
