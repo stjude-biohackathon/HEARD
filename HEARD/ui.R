@@ -24,11 +24,11 @@ gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
 
 #EVAN
 
-clinical_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
+clinical_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
 hrd_data <- read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
 id_data<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
 sbs_data <- read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-mut_call_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
+mut_call_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
 
 
 #EVAN
@@ -67,7 +67,7 @@ navbarPage(
     width = "150px"
   ),
   tabPanel("Patient_View",
-           sidebarPanel(width=2,
+           fluidRow(sidebarPanel(width=2,
                         # naming this panel the Case Navigator
                         h3("Case Navigator"),
                         # get patient ID info for rendering
@@ -80,23 +80,23 @@ navbarPage(
                         downloadButton("report", "Generate report"),
            ),
                                 # First panel is the patient data - NEED TO RENDER
-                                fluidRow(
+                              
                                   column(
-                                    width=12,offset=0,
+                                    width=6,offset=0,
                                     #withLoader(textOutput("clinical_info")),
                                     htmlOutput("clinical_info")           
                                   ), # column end
                                 ),
                                 fluidRow(
                                   # First Row is the HRD scores
-                                  column(width=3,
+                                  column(width=3,offset=2,
                                          h3("HRD Score Metrics"),
                                          pickerInput("hrd_metrics", "HRD Metric:", 
                                                      choices=colnames(hrd_data[,-1])),
                                          withLoader(plotOutput("hrdScores", height="400px", width="400px"),
                                                     type="html", loader="pacman")
                                   ), #end hrdScores column
-                                  column(width=3,offset=3,
+                                  column(width=3,offset=4,
                                          h3("Mutational Signature Exposure"),
                                          withLoader(plotOutput("mutsigs", height="400px", width="400px"),
                                                     type="html", loader="pacman")
@@ -110,7 +110,7 @@ navbarPage(
                                                                  'chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX'))),
                                 ),
                                 fluidRow(
-                                  column(width=12, offset=0,
+                                  column(width=12, offset=2,
                                          withLoader(plotOutput("chromImage", height="300px", width="300px"),
                                                     type="html", loader="pacman")
                                   ), #end chromImage column
@@ -169,4 +169,3 @@ navbarPage(
   
   
 )
-
