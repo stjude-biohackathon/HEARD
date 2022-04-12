@@ -63,7 +63,8 @@ navbarPage(
   tabPanel(
     "Upload Data Table",
     fluidPage(
-      wellPanel(p("Upload your data file below and click Analyze Data to begin visualization.")),
+      wellPanel(p("Upload your data file below and click Analyze Data to begin visualization."),
+                "Allowed filetypes are .txt, .csv, .tsv, and .xlsx"),
       fluidRow(
         column(fileInput("uploaded_HRD_data",
                          label = "Upload your data",
