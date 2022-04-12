@@ -24,11 +24,11 @@ gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
 
 #EVAN
 
-clinical_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
+clinical_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
 hrd_data <- read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
 id_data<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
 sbs_data <- read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-mut_call_data <- read.table(file="../TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
+mut_call_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
 
 
 #EVAN
