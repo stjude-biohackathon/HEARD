@@ -1,0 +1,43 @@
+---
+title: "HRD Status Report"
+output: html_document
+params:
+  FileName: NA
+  SBS3: NA
+  SBS5: NA
+  ID6: NA
+  HRDsum: NA
+  cellularity: NA
+  HRDStatus: NA
+---
+
+## Patient Information
+```{r,echo=FALSE}
+paste("The current patient is:",params$FileName)
+paste("The patient's HRD status is:",params$HRDStatus)
+paste("The patient's HRD sum score is:",params$HRDsum)
+```
+
+## Patient HRDsum Metrics
+```{r,echo=FALSE}
+paste("The patient's HRDsum score is: ", params$HRDsum, ". The sample collected for this patient has an estimated tumor cellularity score of: ", params$cellularity, "The estimated tumor cellularity is defined as the relative proportion of tumor and normal cells in a sample.")
+```
+
+## Patient HRD Status evidence
+
+### The following evidence was used to determine your sample's HRD status:
+
+1. HRD Sum composite score 
+2. Germline high-impact mutation in HRD-related genes: ATM, BRCA1, & BRCA2 + Loss of Heterozygosity event
+3. Somatic high-impact mutations in HRD-related genes: ATM, BRCA1, & BRCA2 + Loss of Heterozygosity event
+4. Mutational Signature Exposure to COSMIC Signatures: SBS3, ID6, and RS5
+5. CNA information identified as related to ATM, BRCA1, and BRCA2 loss of heterozygosity
+
+```{r,echo=FALSE}
+print("Germline evidence for HRD:")
+#mutation_plotter(params$germline)
+print("Somatic evidence for HRD:")
+#mutation_plotter(params$somatic)
+print("CNA evidence for LOH event in HRD-related gene")
+#CNA_plotter(params$CNA)
+```
