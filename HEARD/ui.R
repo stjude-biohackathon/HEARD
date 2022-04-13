@@ -92,7 +92,7 @@ navbarPage(
            # FMove to a single row
            column(width=3,#offset=2,
                   h3("HRD Score Metrics"),
-                  pickerInput("hrd_metrics", "HRD Metric:", 
+                  pickerInput("hrd_metrics", "HRD Metric:", selected = "HRDsum",
                               choices=colnames(hrd_data[,-1])),
                   withLoader(plotOutput("hrdScores", height="400px", width="400px"),
                              type="html", loader="dnaspin")
@@ -107,7 +107,7 @@ navbarPage(
            # next Row is the chromosome info
            fluidRow(
              column(width=2,offset=7,
-                    pickerInput("Chromosome", "Chromosome:",
+                    pickerInput("Chromosome", "Chromosome:", selected = "chr13",
                                 choices = c('chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13',
                                             'chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX'))),
            ),
@@ -123,7 +123,7 @@ navbarPage(
   tabPanel("Cohort View",
            sidebarPanel(pickerInput("TCGA", "TCGA:", 
                                     choices = (tcga_data[,1])),
-                        pickerInput("Column", "Column:",
+                        pickerInput("Column", "Column:", selected = "HRDsum",
                                     choices=colnames(tcga_data)[!colnames(tcga_data) %in% c("FileName")])
                         
            ),
@@ -131,22 +131,26 @@ navbarPage(
            fluidRow(
              column(
                width=12,
+               h3("Loss of Heterozygosity Events"),
                withLoader(plotOutput("LOH_Info"), type="html", loader="dnaspin")
              )
            ),
            fluidRow(
              column(
                width=12,
+               h3("HRD Metrics"),
                withLoader(plotOutput("scoreTCGA"), type="html", loader="dnaspin")
              )
            ),
            fluidRow(
              column(
                width=5,
+               h3("ID Heatmap"),
                withLoader(plotOutput("id_htmap"), type="html", loader="dnaspin")
              ),
              column(
                width=7,
+               h3("SBS Heatmap"),
                withLoader(plotOutput("sbs_htmap"), type="html", loader="dnaspin")
              )
            )
@@ -157,8 +161,17 @@ navbarPage(
       wellPanel(p("Upload your data file below and click Analyze Data to begin visualization."),
                 "Allowed filetypes are .csv, .tsv, .txt, and .xlsx"),
       fluidRow(
-        column(fileInput("uploaded_HRD_data",
-                         label = "Upload your data",
+        column(fileInput("uploaded_mut_data",
+                         label = "Upload your mutation info data",
+                         accept = c(".csv", ".tsv", ".txt", ".xlsx")),
+               fileInput("uploaded_HRD_data",
+                         label = "Upload your HRD data",
+                         accept = c(".csv", ".tsv", ".txt", ".xlsx")),
+               fileInput("uploaded_SBS_data",
+                         label = "Upload your SBS data",
+                         accept = c(".csv", ".tsv", ".txt", ".xlsx")),
+               fileInput("uploaded_ID_data",
+                         label = "Upload your ID data",
                          accept = c(".csv", ".tsv", ".txt", ".xlsx")),
                width = 6)
       ),
