@@ -5,43 +5,49 @@ library("readr")
 library("dplyr")
 library("tools")
 library("DT")
-library("bslib")
+#library("bslib")
 library("shinycustomloader")
 library("plotly")
 library("shinyWidgets")
 library("ggplot2")
 library("RColorBrewer")
-library("ComplexHeatmap")
-# global options for the shiny application
+suppressPackageStartupMessages(library("ComplexHeatmap"))
+library("R.utils")
+library("ncdf4")
 options(shiny.maxRequestSize=300*1024^2)
 options(repos = BiocManager::repositories())
-# Susy's variables
-tcga_data<-read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
-sbs_score<-read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-id_score<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
-gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
+
+#load example dataset first
+directory <- (file.path("example_dataset"))
+#SMD read-in
+tcga_data<-read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+sbs_score<-read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+id_score<-read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+gene_loh<-read.table(file.path((paste(directory, "/gene_LOH_events.txt", sep = ''))), sep="\t", header=TRUE)
+
+#EVAN read-in
+clinical_data <- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
+hrd_data <- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+id_data <- read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+sbs_data <- read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+mut_call_data <- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
 
 
-#EVAN global variables - need to make these variables match Susy's, then we can worry about rending everything dynamically
-clinical_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
-hrd_data <- read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
-id_data<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
-sbs_data <- read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-mut_call_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
-
-
-# Chromosome info used by Dale's chromosome image function
+#EVAN
+# A couple of convenience utilities
 chr_translation=list("-01","-02","-03","-04","-05",
                      "-06","-07","-08","-09","-10",
                      "-11","-12","-13","-14","-15",
                      "-16","-17","-18","-19","-20",
                      "-21","-22","-23")
+
 names(chr_translation)=c("chr1","chr2","chr3","chr4","chr5",
                          "chr6","chr7","chr8","chr9","chr10",
                          "chr11","chr12","chr13","chr14","chr15",
                          "chr16","chr17","chr18","chr19","chr20",
                          "chr21","chr22","chrX")
-# Utility functions
+
+#utility functions
 getShortName<-function(sample_basename) { 
   tokens=str_split(sample_basename,"\\.",n=Inf)
   parta=unlist(tokens)[1]
@@ -50,13 +56,55 @@ getShortName<-function(sample_basename) {
   shortname=paste(tokensb[1],tokensb[2],tokensb[3],sep="-")
   return(shortname)
 }
-# Define Functions used by the UI when rendering plots etc. Below
+
+
+
 function(input, output, session) {
-  # Not sure what this is doing.......
-  observe({print(input$pat_id)})
+  
+  #data table upload functions moved to top for clarity (replace example dataset with uploaded tar.gz)
+  uploaded_HRD_data <- eventReactive(c(input$uploaded_HRD_data),
+                                     { if (file_ext(input$uploaded_HRD_data$datapath) == "gz") {
+                                       isGzipped(input$uploaded_HRD_data$datapath)
+                                       tarFile <- gunzip(input$uploaded_HRD_data$datapath)
+                                       unlink("temp", recursive = T, force = T)
+                                       untar(tarFile, exdir = "temp/")
+                                       directory <- list.dirs("temp", recursive = FALSE)
+                                       
+                                       #SMD data read-in
+                                       tcga_data<<-read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+                                       updatePickerInput(session = session, inputId = "TCGA",
+                                                         choices = (tcga_data[,1]))
+                                       updatePickerInput(session = session, inputId = "Column", selected = "HRDsum",
+                                                         choices=colnames(tcga_data)[!colnames(tcga_data) %in% c("FileName")])
+                                       sbs_score<<-read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+                                       id_score<<-read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+                                       gene_loh<<-read.table(file.path((paste(directory, "/gene_LOH_events.txt", sep = ''))), sep="\t", header=TRUE)
+
+                                       #EVAN read-in
+                                       clinical_data <<- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
+                                       hrd_data <<- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+                                       updatePickerInput(session = session, inputId = "hrd_metrics", selected = "HRDsum",
+                                                         choices=colnames(hrd_data[,-1]))
+                                       id_data <<- read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+                                       sbs_data <<- read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+                                       updatePickerInput(session = session, inputId = "pat_id",
+                                                         choices=(sbs_data$FileName))
+                                       mut_call_data <<- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
+                                       
+                                       
+                                       list_of_df <- list(hrd_data, id_data, sbs_data)
+                                       
+                                       data_viz <- Reduce(function(x, y) merge(x, y, all=TRUE), list_of_df, accumulate=FALSE)
+                                       
+                                       data_viz
+                                     }
+                                     })
+  
+  
+  #observe({print(input$pat_id)})
   # patient data text renderer
   output$clinical_info <- renderUI({
-    #clinical_data$Sample_type
+    clinical_data$Sample_type
     df <- clinical_data[clinical_data$Patient == substr(input$pat_id, 1, 12),]
     df_germline <- df[df$Sample_type == "Normal",]
     df_somatic <- df[df$Sample_type == "Tumor",]
@@ -69,6 +117,8 @@ function(input, output, session) {
     text5 <- paste("Patient Somatic SNP:",df_somatic$dbSNP)
     HTML(paste(text0,text1,text2,text3,text4,text5,sep="<br/>"))
   })
+  
+  
   # output chomosome images
   output$chromImage <- renderImage(deleteFile = FALSE,{
     filename <- normalizePath(file.path(paste('TCGA_HRD_positive_samples_CNA_figs/',
@@ -76,7 +126,7 @@ function(input, output, session) {
                                               input$pat_id,'omosome_view',
                                               chr_translation[input$Chromosome],
                                               '.png', sep='')))
-    print(filename)
+    #print(filename)
     list(src = filename,height=800,width=1000)
   })
   # Function for rendering hrdscores
@@ -194,19 +244,7 @@ function(input, output, session) {
       )
     }
   )
-  uploaded_HRD_data <- eventReactive(c(input$uploaded_HRD_data),
-                                         { if (file_ext(input$uploaded_HRD_data$datapath) == "xlsx") {
-                                              data_viz <- read_excel(input$uploaded_HRD_data$datapath)
-                                           
-                                              data_viz
-                                         }
-                                           else {
-                                             data_viz <- read_delim(input$uploaded_HRD_data$datapath, show_col_types = FALSE)
-                                             
-                                             data_viz
-                                           }
-                                         })
-  
+
   
       output$LOH_Info<-renderPlot({
         # Pre-processing dataset
