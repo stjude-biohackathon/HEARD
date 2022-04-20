@@ -12,17 +12,18 @@ params:
 ---
 
 ## Patient Information
-```{r,echo=FALSE}
-paste("The current patient is:",params$FileName)
-paste("The patient's HRD status is:",params$HRDStatus)
-paste("The patient's HRD sum score is:",params$HRDsum)
-```
+
+#### Patient's name is: *`r params$FileName`*
+#### Patient HRD Status is: *`r params$HRDStatus`*
+#### The patient's HRD sum score is: *`r params$HRDsum`*
 
 ## Patient HRDsum Metrics
+
+#### The patient's HRDsum score is `r params$HRDsum`. 
+#### The sample collected for this patient has an estimated tumor cellularity score of: `r params$cellularity`. *The estimated tumor cellularity is defined as the relative proportion of tumor and normal cells in a sample.*
 ```{r,echo=FALSE}
-paste("The patient's HRDsum score is: ", params$HRDsum, ". The sample collected for this patient has an estimated tumor cellularity score of: ", params$cellularity, "The estimated tumor cellularity is defined as the relative proportion of tumor and normal cells in a sample.")
 mat <- as.data.frame(params)
-p <- ggplot(mat,aes(x=mat$FileName,y=mat$HRDsum)) +
+p <- ggplot(mat,aes(x=FileName,y=HRDsum,fill="tomato")) +
   geom_bar(stat="Identity")
 p
 ```
@@ -36,12 +37,30 @@ p
 3. Somatic high-impact mutations in HRD-related genes: ATM, BRCA1, & BRCA2 + Loss of Heterozygosity event
 4. Mutational Signature Exposure to COSMIC Signatures: SBS3, ID6, and RS5
 5. CNA information identified as related to ATM, BRCA1, and BRCA2 loss of heterozygosity
-
 ```{r,echo=FALSE}
-print("Germline evidence for HRD:")
-#mutation_plotter(params$germline)
-print("Somatic evidence for HRD:")
-#mutation_plotter(params$somatic)
-print("CNA evidence for LOH event in HRD-related gene")
-#CNA_plotter(params$CNA)
+mat <- as.data.frame(params)
+mat <- mat %>%
+  dplyr::select(SBS3,SBS5,ID6)
+#row.names(mat) <- mat$FileName
+row.colors <- rep.int(c("black"), nrow(mat))
+#row.colors[rownames(mat) == chosen] <- "red"
+col.colors <- rep.int(c("black"), ncol(mat))
+col.colors[colnames(mat) %in% c("SBS3","SBS5","ID6")] <- "red"
+rownames(mat)<-substr(rownames(mat),1,12)
+col<-colorRampPalette(brewer.pal(8, name="YlGnBu"))(25)
+#mat <- mat[row.names(mat) == getShortName(input$pat_id),]
+#Heatmap
+Heatmap(as.matrix(mat), name="Exposure", 
+        width = ncol(mat)*unit(3, "cm"), 
+        height = nrow(mat)*unit(4, "cm"),
+        cluster_rows=FALSE, 
+        cluster_columns=FALSE,
+        column_names_gp = grid::gpar(fontsize = 14, col=col.colors),
+        column_title_gp = grid::gpar(fontsize = 16, col=col.colors),
+        row_names_gp = grid::gpar(fontsize = 14, col=row.colors), col=col,
+        row_title_gp = grid::gpar(fontsize = 16, col=col.colors),
+        show_heatmap_legend = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sprintf("%.1f", mat[i, j]), x, y, gp = gpar(fontsize = 16,col="tomato"))})
 ```
+

@@ -55,7 +55,8 @@ navbarPage(
       wellPanel(p("Upload your HRD dataset below and click Analyze Data to begin visualization.",
                 "Uploaded file must be tar.gz obtained from HRD pipeline."),
                 p("If no file is uploaded, an example dataset has been loaded for you.",
-                "To download the example dataset (and explore required files and folders) click to", a(href="example_dataset.tar.gz", "Download Example Dataset", download=NA, target="_blank"))),
+                "To download the example dataset (and explore required files and folders) click to", 
+                a(href="example_dataset.tar.gz", "Download Example Dataset", download=NA, target="_blank"))),
       fluidRow(
         column(fileInput("uploaded_HRD_data",
                          label = "Upload your HRD dataset",
@@ -116,7 +117,6 @@ navbarPage(
                                  downloadButton("report", "Generate report"),
            ),
            # First panel is the patient data - NEED TO RENDER
-           
            column(
              width=3,offset=0,
              h3("Patient Information"),

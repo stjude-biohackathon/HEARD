@@ -61,6 +61,7 @@ getShortName<-function(sample_basename) {
 
 function(input, output, session) {
   
+##### Dan's code below##################################
   #data table upload functions moved to top for clarity (replace example dataset with uploaded tar.gz)
   uploaded_HRD_data <- eventReactive(c(input$uploaded_HRD_data),
                                      { if (file_ext(input$uploaded_HRD_data$datapath) == "gz") {
@@ -99,29 +100,135 @@ function(input, output, session) {
                                        data_viz
                                      }
                                      })
-  
-  
+##########################################################################
+  # Evan function to render input dynamically
+#  output$data <- renderTable({
+#    file <- input$file1
+#    ext <- tools::file_ext(file$datapath)
+    #
+#    req(file)
+#    validate(need(ext=="txt","Please upload a txt file"))
+#    tcga_data <- read.delim(file$datapath, sep="\t", header=TRUE)
+#  })
   #observe({print(input$pat_id)})
   # patient data text renderer
   output$clinical_info <- renderUI({
-    clinical_data$Sample_type
+    #clinical_data$Sample_type
     df <- clinical_data[clinical_data$Patient == substr(input$pat_id, 1, 12),]
-    df_germline <- df[df$Sample_type == "Normal",]
-    df_somatic <- df[df$Sample_type == "Tumor",]
-    # creating our text lines
-    text0 <- paste("",sep="<br/>")
-    text1 <- paste("Patient Name:",df_germline$Patient)
-    text2 <- paste("Patient Diagnosis:",df_germline$Dx)
-    text3 <- paste("Patient Age: 56")
-    text4 <- paste("Patient Germline SNP:",df_germline$dbSNP)
-    text5 <- paste("Patient Somatic SNP:",df_somatic$dbSNP)
-    HTML(paste(text0,text1,text2,text3,text4,text5,sep="<br/>"))
+    if (length(df$Sample_type) > 1) {
+      # check the sample type
+      print(df$Sample_type)
+      # split rows into two data frames
+      df1 <- df[1,]
+      df2 <- df[2,]
+      #check if first row contains info for germline
+      # we need to turn this into a function later
+      if(df1$Sample_type == "Normal") {
+        print(paste("first sample type is normal:",df1$Sample_type))
+        text0 <- paste("",sep="<br/>")
+        text1 <- paste("Patient Name:",df1$Patient)
+        text2 <- paste("Patient Diagnosis:",df1$Dx)
+        text20 <- paste("",sep="<br/>")
+        text3 <- paste("Patient Germline Mutation Information:")
+        text4 <- paste("Gene: ",df1$annovar_region_gene)
+        text5 <- paste("Chromosome: ",df1$Chr)
+        text6 <- paste("Position: ",df1$Pos)
+        text7 <- paste("Type: ",df1$Type)
+        text8 <- paste("dbSNP:",df1$dbSNP)
+        text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+        text9 <- paste("Class:",df1$Class)
+        text10 <- paste("Function:",df1$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      }
+      #check if first row contains info for tumor
+      else if (df1$Sample_type == "Tumor") {
+        print(paste("first sample type is Tumor:",df1$Sample_type))
+        text0 <- paste("",sep="<br/>")
+        text1 <- paste("Patient Name:",df1$Patient)
+        text2 <- paste("Patient Diagnosis:",df1$Dx)
+        text20 <- paste("",sep="<br/>")
+        text3 <- paste("Patient Somatic Mutation Information:")
+        text4 <- paste("Gene: ",df1$annovar_region_gene)
+        text5 <- paste("Chromosome: ",df1$Chr)
+        text6 <- paste("Position: ",df1$Pos)
+        text7 <- paste("Type: ",df1$Type)
+        text8 <- paste("dbSNP:",df1$dbSNP)
+        text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+        text9 <- paste("Class:",df1$Class)
+        text10 <- paste("Function:",df1$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      }
+      #check if second row contains info for germline
+      if(df2$Sample_type == "Normal") {
+        text11 <- paste("",sep="<br/>")
+        text12 <- paste("Patient Germline Mutation Information:")
+        text13 <- paste("Gene: ",df2$annovar_region_gene)
+        text14 <- paste("Chromosome: ",df2$Chr)
+        text15 <- paste("Position: ",df2$Pos)
+        text16 <- paste("Type: ",df2$Type)
+        text17 <- paste("dbSNP:",df2$dbSNP)
+        text22 <- paste("% Alt. Allele:", df2$Percent_alternative_allele)
+        text18 <- paste("Class:",df2$Class)
+        text19 <- paste("Function:",df2$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      } 
+      #check if second row contains info for tumor
+      else if (df2$Sample_type == "Tumor") {
+        text11 <- paste("",sep="<br/>")
+        text12 <- paste("Patient Somatic Mutation Information:")
+        text13 <- paste("Gene: ",df2$annovar_region_gene)
+        text14 <- paste("Chromosome: ",df2$Chr)
+        text15 <- paste("Position: ",df2$Pos)
+        text16 <- paste("Type: ",df2$Type)
+        text17 <- paste("dbSNP:",df2$dbSNP)
+        text22 <- paste("% Alt. Allele:", df2$Percent_alternative_allele)
+        text18 <- paste("Class:",df2$Class)
+        text19 <- paste("Function:",df2$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      }
+      HTML(paste(text0,text1,text2,text20,text3,text4,text5,text6,text7,text8,text21,text9,text10,
+                 text11,text12,text13,text14,text15,text16,text17,text22,text18,text19,sep="<br/>"))
+    }
+    else if (df$Sample_type == "Normal") {
+      df1 <- df
+      print(paste("sample type is normal:",df1$Sample_type))
+      text0 <- paste("",sep="<br/>")
+      text1 <- paste("Patient Name:",df1$Patient)
+      text2 <- paste("Patient Diagnosis:",df1$Dx)
+      text20 <- paste("",sep="<br/>")
+      text3 <- paste("Patient Germline Mutation Information:")
+      text4 <- paste("Gene: ",df1$annovar_region_gene)
+      text5 <- paste("Chromosome: ",df1$Chr)
+      text6 <- paste("Position: ",df1$Pos)
+      text7 <- paste("Type: ",df1$Type)
+      text8 <- paste("dbSNP:",df1$dbSNP)
+      text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+      text9 <- paste("Class:",df1$Class)
+      text10 <- paste("Function:",df1$annovar_exonic_function)
+      HTML(paste(text0,text1,text2,text20,text3,text4,text5,text6,text7,text8,text21,text9,text10,sep="<br/>"))
+    }
+    else if (df$Sample_type == "Tumor") {
+      df1 <- df
+      print(paste("first sample type is Tumor:",df1$Sample_type))
+      text0 <- paste("",sep="<br/>")
+      text1 <- paste("Patient Name:",df1$Patient)
+      text2 <- paste("Patient Diagnosis:",df1$Dx)
+      text20 <- paste("",sep="<br/>")
+      text3 <- paste("Patient Somatic Mutation Information:")
+      text4 <- paste("Gene: ",df1$annovar_region_gene)
+      text5 <- paste("Chromosome: ",df1$Chr)
+      text6 <- paste("Position: ",df1$Pos)
+      text7 <- paste("Type: ",df1$Type)
+      text8 <- paste("dbSNP:",df1$dbSNP)
+      text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+      text9 <- paste("Class:",df1$Class)
+      text10 <- paste("Function:",df1$annovar_exonic_function)
+      HTML(paste(text0,text1,text2,text20,text3,text4,text5,text6,text7,text8,text21,text9,text10,sep="<br/>"))
+    }
   })
-  
-  
   # output chomosome images
   output$chromImage <- renderImage(deleteFile = FALSE,{
-    filename <- normalizePath(file.path(paste('TCGA_HRD_positive_samples_CNA_figs/',
+    filename <- normalizePath(file.path(paste('example_dataset/TCGA_HRD_positive_samples_CNA_figs/',
                                               input$pat_id,'omosome_view/',
                                               input$pat_id,'omosome_view',
                                               chr_translation[input$Chromosome],
@@ -134,16 +241,16 @@ function(input, output, session) {
     # set df to our hrd metrics
     df <- hrd_data
     # get averages
-    avg <- summarize_all(df[,-1],mean)
+    avg <- dplyr::summarize_all(df[,-1],mean)
     avg$FileName <- "Average"
     df_plot <- rbind(df[df$FileName == input$pat_id,],
                      avg)
     # set up highlight
-    df_plot$Sample<-"no"
+    df_plot$Sample <- "no"
     df_plot$Sample <- ifelse(df_plot$FileName == input$pat_id,"yes","no")
     df_plot$FileName <- substr(df_plot$FileName, 1, 12)
     metric <- input$hrd_metrics
-    #print(df_plot$FileName)
+    print(df_plot$Sample)
     #ggplot(hrd_data, aes(x=FileName,y=input$hrd_metrics)) +
     ggplot(df_plot, aes(x=FileName,fill=Sample)) +
       #y=input$hrd_metrics, fill="highlight")) +
@@ -152,6 +259,7 @@ function(input, output, session) {
       xlab("Patient") +
       ylab("Value") +
       #theme_bw(base_size = 16) +
+      scale_fill_manual(values=c("yes"="tomato", "no"="gray"))+
       theme(
         axis.text.x = element_text(angle = 90,vjust=1, face = "bold",size=12),
         axis.text.y = element_text(face = "bold",size=12),
@@ -165,8 +273,7 @@ function(input, output, session) {
         panel.grid.major = element_blank(), # get rid of major grid
         panel.grid.minor = element_blank(), # get rid of minor grid
         legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-        legend.box.background = element_rect(fill = "transparent")+
-          scale_fill_manual(values=c("yes"="tomato", "no"="gray")))
+        legend.box.background = element_rect(fill = "transparent"))
   })
   # function for mutsigs plot
   output$mutsigs <- renderPlot({
@@ -190,13 +297,13 @@ function(input, output, session) {
             height = nrow(mat)*unit(4, "cm"),
             cluster_rows=FALSE, 
             cluster_columns=FALSE,
-            column_names_gp = grid::gpar(fontsize = 12, col=col.colors),
+            column_names_gp = grid::gpar(fontsize = 14, col=col.colors),
             column_title_gp = grid::gpar(fontsize = 16, col=col.colors),
-            row_names_gp = grid::gpar(fontsize = 12, col=row.colors), col=col,
+            row_names_gp = grid::gpar(fontsize = 14, col=row.colors), col=col,
             row_title_gp = grid::gpar(fontsize = 16, col=col.colors),
             show_heatmap_legend = FALSE,
             cell_fun = function(j, i, x, y, width, height, fill) {
-              grid.text(sprintf("%.1f", mat[i, j]), x, y, gp = gpar(fontsize = 10,col="red"))})
+              grid.text(sprintf("%.1f", mat[i, j]), x, y, gp = gpar(fontsize = 16,col="tomato"))})
     
   })
   #### Evan Code Here####################################################################################
