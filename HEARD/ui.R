@@ -5,31 +5,16 @@ library("readr")
 library("dplyr")
 library("tools")
 library("DT")
-library("bslib")
+#library("bslib")
 library("shinycustomloader")
 library("plotly")
 library("shinyWidgets")
 library("ggplot2")
 library("RColorBrewer")
-library("ComplexHeatmap")
+suppressPackageStartupMessages(library("ComplexHeatmap"))
+library("R.utils")
 options(shiny.maxRequestSize=300*1024^2)
 options(repos = BiocManager::repositories())
-
-tcga_data<-read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
-sbs_score<-read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-id_score<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
-gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
-
-
-
-#EVAN
-
-clinical_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
-hrd_data <- read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
-id_data<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
-sbs_data <- read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-mut_call_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
-
 
 #EVAN
 # A couple of convenience utilities
@@ -57,14 +42,66 @@ getShortName<-function(sample_basename) {
 }
 
 
-
-
 navbarPage(
-  theme = bs_theme(version = 5),
-  "HEARD",
+  #theme = bs_theme(version = 5),
+  title="HEARD",
   img(
     src = "images/HEARD.png",
     width = "200px"
+  ),
+  tabPanel(
+    "Upload Dataset",
+    fluidPage(
+      wellPanel(p("Upload your HRD dataset below and click Analyze Data to begin visualization.",
+                "Uploaded file must be tar.gz obtained from HRD pipeline."),
+                p("If no file is uploaded, an example dataset has been loaded for you.",
+                "To download the example dataset (and explore required files and folders) click to", 
+                a(href="example_dataset.tar.gz", "Download Example Dataset", download=NA, target="_blank"))),
+      fluidRow(
+        column(fileInput("uploaded_HRD_data",
+                         label = "Upload your HRD dataset",
+                         accept = c(".gz")),
+               width = 6),
+      ),
+      actionButton("anaylze_data",
+                   "Analyze Data"),
+      withLoader(dataTableOutput("dt_PatientData", width = "100%", height = "auto"), type="html", loader="dnaspin")
+    )
+  ),
+  tabPanel("Cohort View",
+           sidebarPanel(pickerInput("TCGA", "TCGA:", 
+                                    choices = (tcga_data[,1])),
+                        pickerInput("Column", "Column:", selected = "HRDsum",
+                                    choices=colnames(tcga_data)[!colnames(tcga_data) %in% c("FileName")])
+                        
+           ),
+           #We can change the actual loader to be a gif or image
+           fluidRow(
+             column(
+               width=12,
+               h3("Loss of Heterozygosity Events"),
+               withLoader(plotOutput("LOH_Info"), type="html", loader="dnaspin")
+             )
+           ),
+           fluidRow(
+             column(
+               width=12,
+               h3("HRD Metrics"),
+               withLoader(plotOutput("scoreTCGA"), type="html", loader="dnaspin")
+             )
+           ),
+           fluidRow(
+             column(
+               width=5,
+               h3("ID Heatmap"),
+               withLoader(plotOutput("id_htmap"), type="html", loader="dnaspin")
+             ),
+             column(
+               width=7,
+               h3("SBS Heatmap"),
+               withLoader(plotOutput("sbs_htmap"), type="html", loader="dnaspin")
+             )
+           )
   ),
   tabPanel("Patient View",
            fluidRow(sidebarPanel(width=2,
@@ -80,7 +117,6 @@ navbarPage(
                                  downloadButton("report", "Generate report"),
            ),
            # First panel is the patient data - NEED TO RENDER
-           
            column(
              width=3,offset=0,
              h3("Patient Information"),
@@ -120,68 +156,4 @@ navbarPage(
            #), #end fluidRow2
            #),#end fluidrow1
   ),
-  tabPanel("Cohort View",
-           sidebarPanel(pickerInput("TCGA", "TCGA:", 
-                                    choices = (tcga_data[,1])),
-                        pickerInput("Column", "Column:", selected = "HRDsum",
-                                    choices=colnames(tcga_data)[!colnames(tcga_data) %in% c("FileName")])
-                        
-           ),
-           #We can change the actual loader to be a gif or image
-           fluidRow(
-             column(
-               width=12,
-               h3("Loss of Heterozygosity Events"),
-               withLoader(plotOutput("LOH_Info"), type="html", loader="dnaspin")
-             )
-           ),
-           fluidRow(
-             column(
-               width=12,
-               h3("HRD Metrics"),
-               withLoader(plotOutput("scoreTCGA"), type="html", loader="dnaspin")
-             )
-           ),
-           fluidRow(
-             column(
-               width=5,
-               h3("ID Heatmap"),
-               withLoader(plotOutput("id_htmap"), type="html", loader="dnaspin")
-             ),
-             column(
-               width=7,
-               h3("SBS Heatmap"),
-               withLoader(plotOutput("sbs_htmap"), type="html", loader="dnaspin")
-             )
-           )
-  ),
-  tabPanel(
-    "Upload Data Table",
-    fluidPage(
-      wellPanel(p("Upload your data file below and click Analyze Data to begin visualization."),
-                "Allowed filetypes are .csv, .tsv, .txt, and .xlsx"),
-      fluidRow(
-        column(fileInput("uploaded_mut_data",
-                         label = "Upload your mutation info data",
-                         accept = c(".csv", ".tsv", ".txt", ".xlsx")),
-               fileInput("uploaded_HRD_data",
-                         label = "Upload your HRD data",
-                         accept = c(".csv", ".tsv", ".txt", ".xlsx")),
-               fileInput("uploaded_SBS_data",
-                         label = "Upload your SBS data",
-                         accept = c(".csv", ".tsv", ".txt", ".xlsx")),
-               fileInput("uploaded_ID_data",
-                         label = "Upload your ID data",
-                         accept = c(".csv", ".tsv", ".txt", ".xlsx")),
-               width = 6)
-      ),
-      actionButton("anaylze_data",
-                   "Analyze Data"),
-      withLoader(dataTableOutput("dt_PatientData", width = "100%", height = "auto"), type="html", loader="dnaspin")
-    )
-  ),
-  
-  collapsible = FALSE
-  
-  
 )

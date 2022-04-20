@@ -5,43 +5,49 @@ library("readr")
 library("dplyr")
 library("tools")
 library("DT")
-library("bslib")
+#library("bslib")
 library("shinycustomloader")
 library("plotly")
 library("shinyWidgets")
 library("ggplot2")
 library("RColorBrewer")
-library("ComplexHeatmap")
-# global options for the shiny application
+suppressPackageStartupMessages(library("ComplexHeatmap"))
+library("R.utils")
+library("ncdf4")
 options(shiny.maxRequestSize=300*1024^2)
 options(repos = BiocManager::repositories())
-# Susy's variables
-tcga_data<-read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
-sbs_score<-read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-id_score<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
-gene_loh <- read.table(file = "./gene_LOH_events.txt",header = TRUE)
+
+#load example dataset first
+directory <- (file.path("example_dataset"))
+#SMD read-in
+tcga_data<-read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+sbs_score<-read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+id_score<-read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+gene_loh<-read.table(file.path((paste(directory, "/gene_LOH_events.txt", sep = ''))), sep="\t", header=TRUE)
+
+#EVAN read-in
+clinical_data <- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
+hrd_data <- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+id_data <- read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+sbs_data <- read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+mut_call_data <- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
 
 
-#EVAN global variables - need to make these variables match Susy's, then we can worry about rending everything dynamically
-clinical_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t",header=TRUE)
-hrd_data <- read.table(file="./TCGA_HRD_positive_samples.txt", sep="\t", header=TRUE)
-id_data<-read.table(file="./TCGA_ID_signature_exposures.txt", sep="\t", header=TRUE)
-sbs_data <- read.table(file="./TCGA_SBS_signature_exposure.txt", sep="\t", header=TRUE)
-mut_call_data <- read.table(file="./TCGA_HRD_positive_samples_mut_calls.txt", sep="\t", header=TRUE)
-
-
-# Chromosome info used by Dale's chromosome image function
+#EVAN
+# A couple of convenience utilities
 chr_translation=list("-01","-02","-03","-04","-05",
                      "-06","-07","-08","-09","-10",
                      "-11","-12","-13","-14","-15",
                      "-16","-17","-18","-19","-20",
                      "-21","-22","-23")
+
 names(chr_translation)=c("chr1","chr2","chr3","chr4","chr5",
                          "chr6","chr7","chr8","chr9","chr10",
                          "chr11","chr12","chr13","chr14","chr15",
                          "chr16","chr17","chr18","chr19","chr20",
                          "chr21","chr22","chrX")
-# Utility functions
+
+#utility functions
 getShortName<-function(sample_basename) { 
   tokens=str_split(sample_basename,"\\.",n=Inf)
   parta=unlist(tokens)[1]
@@ -50,33 +56,184 @@ getShortName<-function(sample_basename) {
   shortname=paste(tokensb[1],tokensb[2],tokensb[3],sep="-")
   return(shortname)
 }
-# Define Functions used by the UI when rendering plots etc. Below
+
+
+
 function(input, output, session) {
-  # Not sure what this is doing.......
-  observe({print(input$pat_id)})
+  
+##### Dan's code below##################################
+  #data table upload functions moved to top for clarity (replace example dataset with uploaded tar.gz)
+  uploaded_HRD_data <- eventReactive(c(input$uploaded_HRD_data),
+                                     { if (file_ext(input$uploaded_HRD_data$datapath) == "gz") {
+                                       isGzipped(input$uploaded_HRD_data$datapath)
+                                       tarFile <- gunzip(input$uploaded_HRD_data$datapath)
+                                       unlink("temp", recursive = T, force = T)
+                                       untar(tarFile, exdir = "temp/")
+                                       directory <- list.dirs("temp", recursive = FALSE)
+                                       
+                                       #SMD data read-in
+                                       tcga_data<<-read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+                                       updatePickerInput(session = session, inputId = "TCGA",
+                                                         choices = (tcga_data[,1]))
+                                       updatePickerInput(session = session, inputId = "Column", selected = "HRDsum",
+                                                         choices=colnames(tcga_data)[!colnames(tcga_data) %in% c("FileName")])
+                                       sbs_score<<-read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+                                       id_score<<-read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+                                       gene_loh<<-read.table(file.path((paste(directory, "/gene_LOH_events.txt", sep = ''))), sep="\t", header=TRUE)
+
+                                       #EVAN read-in
+                                       clinical_data <<- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
+                                       hrd_data <<- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples.txt", sep = ''))), sep="\t", header=TRUE)
+                                       updatePickerInput(session = session, inputId = "hrd_metrics", selected = "HRDsum",
+                                                         choices=colnames(hrd_data[,-1]))
+                                       id_data <<- read.table(file.path((paste(directory, "/TCGA_ID_signature_exposures.txt", sep = ''))), sep="\t", header=TRUE)
+                                       sbs_data <<- read.table(file.path((paste(directory, "/TCGA_SBS_signature_exposure.txt", sep = ''))), sep="\t", header=TRUE)
+                                       updatePickerInput(session = session, inputId = "pat_id",
+                                                         choices=(sbs_data$FileName))
+                                       mut_call_data <<- read.table(file.path((paste(directory, "/TCGA_HRD_positive_samples_mut_calls.txt", sep = ''))), sep="\t", header=TRUE)
+                                       
+                                       
+                                       list_of_df <- list(hrd_data, id_data, sbs_data)
+                                       
+                                       data_viz <- Reduce(function(x, y) merge(x, y, all=TRUE), list_of_df, accumulate=FALSE)
+                                       
+                                       data_viz
+                                     }
+                                     })
+##########################################################################
+  # Evan function to render input dynamically
+#  output$data <- renderTable({
+#    file <- input$file1
+#    ext <- tools::file_ext(file$datapath)
+    #
+#    req(file)
+#    validate(need(ext=="txt","Please upload a txt file"))
+#    tcga_data <- read.delim(file$datapath, sep="\t", header=TRUE)
+#  })
+  #observe({print(input$pat_id)})
   # patient data text renderer
   output$clinical_info <- renderUI({
     #clinical_data$Sample_type
     df <- clinical_data[clinical_data$Patient == substr(input$pat_id, 1, 12),]
-    df_germline <- df[df$Sample_type == "Normal",]
-    df_somatic <- df[df$Sample_type == "Tumor",]
-    # creating our text lines
-    text0 <- paste("",sep="<br/>")
-    text1 <- paste("Patient Name:",df_germline$Patient)
-    text2 <- paste("Patient Diagnosis:",df_germline$Dx)
-    text3 <- paste("Patient Age: 56")
-    text4 <- paste("Patient Germline SNP:",df_germline$dbSNP)
-    text5 <- paste("Patient Somatic SNP:",df_somatic$dbSNP)
-    HTML(paste(text0,text1,text2,text3,text4,text5,sep="<br/>"))
+    if (length(df$Sample_type) > 1) {
+      # check the sample type
+      print(df$Sample_type)
+      # split rows into two data frames
+      df1 <- df[1,]
+      df2 <- df[2,]
+      #check if first row contains info for germline
+      # we need to turn this into a function later
+      if(df1$Sample_type == "Normal") {
+        print(paste("first sample type is normal:",df1$Sample_type))
+        text0 <- paste("",sep="<br/>")
+        text1 <- paste("Patient Name:",df1$Patient)
+        text2 <- paste("Patient Diagnosis:",df1$Dx)
+        text20 <- paste("",sep="<br/>")
+        text3 <- paste("Patient Germline Mutation Information:")
+        text4 <- paste("Gene: ",df1$annovar_region_gene)
+        text5 <- paste("Chromosome: ",df1$Chr)
+        text6 <- paste("Position: ",df1$Pos)
+        text7 <- paste("Type: ",df1$Type)
+        text8 <- paste("dbSNP:",df1$dbSNP)
+        text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+        text9 <- paste("Class:",df1$Class)
+        text10 <- paste("Function:",df1$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      }
+      #check if first row contains info for tumor
+      else if (df1$Sample_type == "Tumor") {
+        print(paste("first sample type is Tumor:",df1$Sample_type))
+        text0 <- paste("",sep="<br/>")
+        text1 <- paste("Patient Name:",df1$Patient)
+        text2 <- paste("Patient Diagnosis:",df1$Dx)
+        text20 <- paste("",sep="<br/>")
+        text3 <- paste("Patient Somatic Mutation Information:")
+        text4 <- paste("Gene: ",df1$annovar_region_gene)
+        text5 <- paste("Chromosome: ",df1$Chr)
+        text6 <- paste("Position: ",df1$Pos)
+        text7 <- paste("Type: ",df1$Type)
+        text8 <- paste("dbSNP:",df1$dbSNP)
+        text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+        text9 <- paste("Class:",df1$Class)
+        text10 <- paste("Function:",df1$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      }
+      #check if second row contains info for germline
+      if(df2$Sample_type == "Normal") {
+        text11 <- paste("",sep="<br/>")
+        text12 <- paste("Patient Germline Mutation Information:")
+        text13 <- paste("Gene: ",df2$annovar_region_gene)
+        text14 <- paste("Chromosome: ",df2$Chr)
+        text15 <- paste("Position: ",df2$Pos)
+        text16 <- paste("Type: ",df2$Type)
+        text17 <- paste("dbSNP:",df2$dbSNP)
+        text22 <- paste("% Alt. Allele:", df2$Percent_alternative_allele)
+        text18 <- paste("Class:",df2$Class)
+        text19 <- paste("Function:",df2$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      } 
+      #check if second row contains info for tumor
+      else if (df2$Sample_type == "Tumor") {
+        text11 <- paste("",sep="<br/>")
+        text12 <- paste("Patient Somatic Mutation Information:")
+        text13 <- paste("Gene: ",df2$annovar_region_gene)
+        text14 <- paste("Chromosome: ",df2$Chr)
+        text15 <- paste("Position: ",df2$Pos)
+        text16 <- paste("Type: ",df2$Type)
+        text17 <- paste("dbSNP:",df2$dbSNP)
+        text22 <- paste("% Alt. Allele:", df2$Percent_alternative_allele)
+        text18 <- paste("Class:",df2$Class)
+        text19 <- paste("Function:",df2$annovar_exonic_function)
+        #HTML(paste(text0,text1,text2,text3,text4,sep="<br/>"))
+      }
+      HTML(paste(text0,text1,text2,text20,text3,text4,text5,text6,text7,text8,text21,text9,text10,
+                 text11,text12,text13,text14,text15,text16,text17,text22,text18,text19,sep="<br/>"))
+    }
+    else if (df$Sample_type == "Normal") {
+      df1 <- df
+      print(paste("sample type is normal:",df1$Sample_type))
+      text0 <- paste("",sep="<br/>")
+      text1 <- paste("Patient Name:",df1$Patient)
+      text2 <- paste("Patient Diagnosis:",df1$Dx)
+      text20 <- paste("",sep="<br/>")
+      text3 <- paste("Patient Germline Mutation Information:")
+      text4 <- paste("Gene: ",df1$annovar_region_gene)
+      text5 <- paste("Chromosome: ",df1$Chr)
+      text6 <- paste("Position: ",df1$Pos)
+      text7 <- paste("Type: ",df1$Type)
+      text8 <- paste("dbSNP:",df1$dbSNP)
+      text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+      text9 <- paste("Class:",df1$Class)
+      text10 <- paste("Function:",df1$annovar_exonic_function)
+      HTML(paste(text0,text1,text2,text20,text3,text4,text5,text6,text7,text8,text21,text9,text10,sep="<br/>"))
+    }
+    else if (df$Sample_type == "Tumor") {
+      df1 <- df
+      print(paste("first sample type is Tumor:",df1$Sample_type))
+      text0 <- paste("",sep="<br/>")
+      text1 <- paste("Patient Name:",df1$Patient)
+      text2 <- paste("Patient Diagnosis:",df1$Dx)
+      text20 <- paste("",sep="<br/>")
+      text3 <- paste("Patient Somatic Mutation Information:")
+      text4 <- paste("Gene: ",df1$annovar_region_gene)
+      text5 <- paste("Chromosome: ",df1$Chr)
+      text6 <- paste("Position: ",df1$Pos)
+      text7 <- paste("Type: ",df1$Type)
+      text8 <- paste("dbSNP:",df1$dbSNP)
+      text21 <- paste("% Alt. Allele:", df1$Percent_alternative_allele)
+      text9 <- paste("Class:",df1$Class)
+      text10 <- paste("Function:",df1$annovar_exonic_function)
+      HTML(paste(text0,text1,text2,text20,text3,text4,text5,text6,text7,text8,text21,text9,text10,sep="<br/>"))
+    }
   })
   # output chomosome images
   output$chromImage <- renderImage(deleteFile = FALSE,{
-    filename <- normalizePath(file.path(paste('TCGA_HRD_positive_samples_CNA_figs/',
+    filename <- normalizePath(file.path(paste('example_dataset/TCGA_HRD_positive_samples_CNA_figs/',
                                               input$pat_id,'omosome_view/',
                                               input$pat_id,'omosome_view',
                                               chr_translation[input$Chromosome],
                                               '.png', sep='')))
-    print(filename)
+    #print(filename)
     list(src = filename,height=800,width=1000)
   })
   # Function for rendering hrdscores
@@ -84,16 +241,16 @@ function(input, output, session) {
     # set df to our hrd metrics
     df <- hrd_data
     # get averages
-    avg <- summarize_all(df[,-1],mean)
+    avg <- dplyr::summarize_all(df[,-1],mean)
     avg$FileName <- "Average"
     df_plot <- rbind(df[df$FileName == input$pat_id,],
                      avg)
     # set up highlight
-    df_plot$Sample<-"no"
+    df_plot$Sample <- "no"
     df_plot$Sample <- ifelse(df_plot$FileName == input$pat_id,"yes","no")
     df_plot$FileName <- substr(df_plot$FileName, 1, 12)
     metric <- input$hrd_metrics
-    #print(df_plot$FileName)
+    print(df_plot$Sample)
     #ggplot(hrd_data, aes(x=FileName,y=input$hrd_metrics)) +
     ggplot(df_plot, aes(x=FileName,fill=Sample)) +
       #y=input$hrd_metrics, fill="highlight")) +
@@ -102,6 +259,7 @@ function(input, output, session) {
       xlab("Patient") +
       ylab("Value") +
       #theme_bw(base_size = 16) +
+      scale_fill_manual(values=c("yes"="tomato", "no"="gray"))+
       theme(
         axis.text.x = element_text(angle = 90,vjust=1, face = "bold",size=12),
         axis.text.y = element_text(face = "bold",size=12),
@@ -115,8 +273,7 @@ function(input, output, session) {
         panel.grid.major = element_blank(), # get rid of major grid
         panel.grid.minor = element_blank(), # get rid of minor grid
         legend.background = element_rect(fill = "transparent"), # get rid of legend bg
-        legend.box.background = element_rect(fill = "transparent")+
-          scale_fill_manual(values=c("yes"="tomato", "no"="gray")))
+        legend.box.background = element_rect(fill = "transparent"))
   })
   # function for mutsigs plot
   output$mutsigs <- renderPlot({
@@ -140,13 +297,13 @@ function(input, output, session) {
             height = nrow(mat)*unit(4, "cm"),
             cluster_rows=FALSE, 
             cluster_columns=FALSE,
-            column_names_gp = grid::gpar(fontsize = 12, col=col.colors),
+            column_names_gp = grid::gpar(fontsize = 14, col=col.colors),
             column_title_gp = grid::gpar(fontsize = 16, col=col.colors),
-            row_names_gp = grid::gpar(fontsize = 12, col=row.colors), col=col,
+            row_names_gp = grid::gpar(fontsize = 14, col=row.colors), col=col,
             row_title_gp = grid::gpar(fontsize = 16, col=col.colors),
             show_heatmap_legend = FALSE,
             cell_fun = function(j, i, x, y, width, height, fill) {
-              grid.text(sprintf("%.1f", mat[i, j]), x, y, gp = gpar(fontsize = 10,col="red"))})
+              grid.text(sprintf("%.1f", mat[i, j]), x, y, gp = gpar(fontsize = 16,col="tomato"))})
     
   })
   #### Evan Code Here####################################################################################
@@ -194,19 +351,7 @@ function(input, output, session) {
       )
     }
   )
-  uploaded_HRD_data <- eventReactive(c(input$uploaded_HRD_data),
-                                         { if (file_ext(input$uploaded_HRD_data$datapath) == "xlsx") {
-                                              data_viz <- read_excel(input$uploaded_HRD_data$datapath)
-                                           
-                                              data_viz
-                                         }
-                                           else {
-                                             data_viz <- read_delim(input$uploaded_HRD_data$datapath, show_col_types = FALSE)
-                                             
-                                             data_viz
-                                           }
-                                         })
-  
+
   
       output$LOH_Info<-renderPlot({
         # Pre-processing dataset
